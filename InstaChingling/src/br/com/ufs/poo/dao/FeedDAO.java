@@ -20,8 +20,8 @@ import java.util.List;
  * @author Luiz Souza
  */
 public class FeedDAO {
-    
-    private static Connection con;
+
+	private static Connection con;
 
 	public FeedDAO(Connection con) {
 		this.con = con;
@@ -33,7 +33,7 @@ public class FeedDAO {
 		try (PreparedStatement stmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 			stmt.setString(1, feed.getImagem());
 			stmt.setString(2, feed.getTexto());
-                        stmt.setInt(3, feed.getIdUsuario());
+			stmt.setInt(3, feed.getIdUsuario());
 			stmt.execute();
 			try (ResultSet rs = stmt.getGeneratedKeys()) {
 				if (rs.next()) {
@@ -43,30 +43,28 @@ public class FeedDAO {
 			}
 		}
 	}
-        public List<Feed> listaFeed(int id) throws SQLException {
+
+	public List<Feed> listaFeed(int id) throws SQLException {
 		// TODO Auto-generated method stub
 		List<Feed> feed = new ArrayList<>();
-		String sql = "SELECT F.*, U.NOME FROM FEED AS F " +
-                            "INNER JOIN USUARIOS AS U ON U.ID = F.IDUSUARIO " +
-                            "WHERE IDUSUARIO = ? " +
-                            "OR IDUSUARIO IN(SELECT DISTINCT(SEGUINDO_ID) FROM SEGUIDORES " +
-                            "WHERE USUARIO_ID = ?) " +
-                            "ORDER BY ID DESC";
+		String sql = "SELECT F.*, U.NOME FROM FEED AS F INNER JOIN USUARIOS AS U ON U.ID = F.IDUSUARIO "
+				+ "WHERE IDUSUARIO = ? OR IDUSUARIO IN(SELECT DISTINCT(SEGUINDO_ID) FROM SEGUIDORES "
+				+ "WHERE USUARIO_ID = ?) ORDER BY ID DESC";
 		try (PreparedStatement stmt = con.prepareStatement(sql)) {
-                    stmt.setInt(1,id);
-                    stmt.setInt(2,id);
-                    stmt.execute();
-                    try (ResultSet rs = stmt.getResultSet()) {
-                        while (rs.next()) {
-                            Feed feedAux = new Feed();
-                            feedAux.setId(rs.getInt("ID"));
-                            feedAux.setIdUsuario(rs.getInt("IDUSUARIO"));
-                            feedAux.setImagem(rs.getString("IMAGEM"));
-                            feedAux.setTexto(rs.getString("TEXTO"));
-                            feedAux.setNomeUsuario(rs.getString("NOME"));
-                            feed.add(feedAux);
-                        }
-                    }
+			stmt.setInt(1, id);
+			stmt.setInt(2, id);
+			stmt.execute();
+			try (ResultSet rs = stmt.getResultSet()) {
+				while (rs.next()) {
+					Feed feedAux = new Feed();
+					feedAux.setId(rs.getInt("ID"));
+					feedAux.setIdUsuario(rs.getInt("IDUSUARIO"));
+					feedAux.setImagem(rs.getString("IMAGEM"));
+					feedAux.setTexto(rs.getString("TEXTO"));
+					feedAux.setNomeUsuario(rs.getString("NOME"));
+					feed.add(feedAux);
+				}
+			}
 		}
 		return feed;
 	}

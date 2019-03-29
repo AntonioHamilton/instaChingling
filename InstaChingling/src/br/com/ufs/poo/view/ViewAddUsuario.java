@@ -5,6 +5,7 @@
  */
 package br.com.ufs.poo.view;
 
+
 import br.com.ufs.poo.jdbc.ConnectionPool;
 import br.com.ufs.poo.dao.FeedDAO;
 import br.com.ufs.poo.dao.UsuarioDAO;
@@ -15,12 +16,31 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import javax.swing.JOptionPane;
 
 /**
  *
  * @author Luiz Souza
  */
 public class ViewAddUsuario extends javax.swing.JFrame {
+    
+    
+	
+    public boolean validar(String email) {
+		
+        boolean isEmailIdValid = false;
+        if (email != null && email.length() > 0) {
+            String expression = "^(?:[\\w_+.]+)@[\\w_]+(?:.\\w{2}(?:\\w+)?)(?:.\\w{2})?$";
+            Pattern pattern = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
+            Matcher matcher = pattern.matcher(email);
+            if (matcher.matches()) {
+                isEmailIdValid = true;
+            }
+        }
+        return isEmailIdValid;
+    }
 
     /**
      * Creates new form ViewAddUsuario
@@ -171,19 +191,23 @@ public class ViewAddUsuario extends javax.swing.JFrame {
 
     private void btnSalvarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnSalvarActionPerformed
         // TODO add your handling code here:
-	try (Connection con = new ConnectionPool().getConnection()) {
-            Usuario usuario = new Usuario(txtNome.getText(), txtDescricao.getText(), txtEmail.getText(), new String(txtSenha.getPassword()));
-            UsuarioDAO dao = new UsuarioDAO(con);
-            dao.salvar(usuario);
-            Feed feed = new Feed();
-            feed.setIdUsuario(usuario.getId());
-            feed.setTexto("Bons Caminhos!");
-            feed.setImagem("img\\BoasVindas.jpg");
-            FeedDAO feedDAO= new FeedDAO(con);
-            feedDAO.salvar(feed);
-            this.dispose();
+        if( validar(txtEmail.getText()) ){
+            try (Connection con = new ConnectionPool().getConnection()) {
+                Usuario usuario = new Usuario(txtNome.getText(), txtDescricao.getText(), txtEmail.getText(), new String(txtSenha.getPassword()));
+                UsuarioDAO dao = new UsuarioDAO(con);
+                dao.salvar(usuario);
+                Feed feed = new Feed();
+                feed.setIdUsuario(usuario.getId());
+                feed.setTexto("Bons Caminhos!");
+                feed.setImagem("img\\BoasVindas.jpg");
+                FeedDAO feedDAO= new FeedDAO(con);
+                feedDAO.salvar(feed);
+                this.dispose();
             }catch (SQLException ex) {
                 Logger.getLogger(ViewAddFeed.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }else{
+            JOptionPane.showMessageDialog(null, "Email Incorreto!", "Messangem do sistema", JOptionPane.WARNING_MESSAGE);
         }
     }//GEN-LAST:event_btnSalvarActionPerformed
 

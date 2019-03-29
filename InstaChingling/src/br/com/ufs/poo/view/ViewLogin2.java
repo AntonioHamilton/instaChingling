@@ -171,6 +171,7 @@ public class ViewLogin2 extends javax.swing.JFrame {
                 ViewPrincipal tela = new ViewPrincipal();
                 tela.setUsuario(usuario);
                 tela.carregar();
+                tela.setSize(1000, 500);
                 tela.setVisible(true);
                 this.dispose();
             } else {

@@ -5,14 +5,19 @@
  */
 package br.com.ufs.poo.view;
 
+import br.com.ufs.poo.dao.ComentarioDAO;
 import br.com.ufs.poo.jdbc.ConnectionPool;
 import br.com.ufs.poo.dao.FeedDAO;
 import br.com.ufs.poo.dao.SeguidorDAO;
+import br.com.ufs.poo.modelo.Comentario;
 import br.com.ufs.poo.modelo.Feed;
+import br.com.ufs.poo.modelo.Seguidor;
 import br.com.ufs.poo.modelo.Usuario;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -21,6 +26,7 @@ import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
 
@@ -31,13 +37,16 @@ import javax.swing.JTextArea;
 public class ViewPrincipal extends javax.swing.JFrame {
 
     /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	/**
      * Creates new form ViewPrincipal
      */
     private int id;
     private String nome;
     private String descricao;
     int top = 0;
-
     /**
      *
      */
@@ -53,7 +62,7 @@ public class ViewPrincipal extends javax.swing.JFrame {
             listaFeed.stream().map((feedAux) -> {
                 JPanel pnlAux = new JPanel();
                 pnlAux.setLayout(null);
-                pnlAux.setBounds(0, top, 560, 500);
+                pnlAux.setBounds(0, top, 700, 400);
                 //TEXTO DO FEED
                 JLabel lblFeed = new JLabel(feedAux.getNomeUsuario()+": "+feedAux.getTexto());
                 lblFeed.setBounds(0,0,400,15);
@@ -65,24 +74,41 @@ public class ViewPrincipal extends javax.swing.JFrame {
                 lblFeedImagem.setBounds(0,25,540,308);
                 ImageIcon image = new ImageIcon(feedAux.getImagem());  
                 lblFeedImagem.setIcon(new ImageIcon(image.getImage().getScaledInstance(lblFeedImagem.getWidth(),lblFeedImagem.getHeight(), Image.SCALE_DEFAULT)));
-                //COMENTARIOS
-                JTextArea comentarios = new JTextArea();
-                comentarios.setBounds(0, 340, 400, 100);
-                JButton comentar = new JButton("Comentar");
-                comentar.setBounds(400, 340, 140, 100);
-                pnlAux.add(comentarios);
-                pnlAux.add(comentar);
                 pnlAux.add(lblFeedImagem);
+                //
+                JTextArea comentarios = new JTextArea();
+                comentarios.setBounds(545, 25, 150, 280);
+                pnlAux.add(comentarios);
+                //
+                JButton addComentario = new JButton("Comentar");
+                addComentario.setBounds(545, 305, 150, 25);
+                ButtonHandler handler = new ButtonHandler();
+                addComentario.addActionListener(handler);
+                addComentario.setActionCommand(String.valueOf(feedAux.getId()));
+                pnlAux.add(addComentario);
+                
+                ComentarioDAO daoComentario = new ComentarioDAO(con);
+                try {
+                    List<Comentario> comentario = daoComentario.lista(feedAux.getId());
+                     for (Comentario comentarioAux : comentario) {
+                        comentarios.append(comentarioAux.getNome()+": " + comentarioAux.getComentario() + "\n");
+                     }
+                    
+                } catch (SQLException ex) {
+                    Logger.getLogger(ViewPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                
+                //
                 return pnlAux;
             }).map((pnlAux) -> {
-                //VARIÁVEL POSIÇÃO TOP
+                //VARIÃ�VEL POSIÃ‡ÃƒO TOP
                 pnlFeed.add(pnlAux);
                 return pnlAux;
             }).map((_item) -> {
                 top += 400;
                 return _item;
             }).forEach((_item) -> {
-                pnlFeed.setPreferredSize(new Dimension (600, 10 + top));
+                pnlFeed.setPreferredSize(new Dimension (750, top));
                 //txtAreaFeed.append(feedAux.getTexto() + "\n");
                 //txtAreaFeed.append(feedAux.getImagem() + "\n");
             });
@@ -91,7 +117,6 @@ public class ViewPrincipal extends javax.swing.JFrame {
             seguidores.stream().forEach((seguidor) -> {
                 txtAreaSeguidores.append(seguidor + "\n");
             });
-
             List<String> seguindo = daoSeg.listaSeguindo(this.id);
             seguindo.stream().forEach((seguindoAux) -> {
                 txtAreaSeguindo.append(seguindoAux + "\n");
@@ -100,12 +125,22 @@ public class ViewPrincipal extends javax.swing.JFrame {
             Logger.getLogger(ViewPrincipal.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
+    	
+    public class ButtonHandler implements ActionListener
+    {
+        //TRATA EVENTO DO BOTÃO
+        public void actionPerformed(ActionEvent event)
+        {
+            ViewAddComentario telaAddComentario = new  ViewAddComentario( Integer.parseInt(event.getActionCommand()), nome );
+            telaAddComentario.setVisible(true);
+        }
+    }
 
     public void setUsuario(Usuario usuario) {
         this.id = usuario.getId();
         this.nome = usuario.getNome();
         this.descricao = usuario.getDescricao();
-        lblNome.setText("Usuário: " + this.nome);
+        lblNome.setText("UsuÃ¡rio: " + this.nome);
         lblDescricao.setText("Descricao: " + this.descricao);
     }
 
@@ -195,15 +230,20 @@ public class ViewPrincipal extends javax.swing.JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        jPanel3.setPreferredSize(new java.awt.Dimension(1000, 500));
+
+        pnlFeed.setPreferredSize(new java.awt.Dimension(800, 545));
+        pnlFeed.setVerifyInputWhenFocusTarget(false);
+
         javax.swing.GroupLayout pnlFeedLayout = new javax.swing.GroupLayout(pnlFeed);
         pnlFeed.setLayout(pnlFeedLayout);
         pnlFeedLayout.setHorizontalGroup(
             pnlFeedLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 609, Short.MAX_VALUE)
+            .addGap(0, 800, Short.MAX_VALUE)
         );
         pnlFeedLayout.setVerticalGroup(
             pnlFeedLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 418, Short.MAX_VALUE)
+            .addGap(0, 545, Short.MAX_VALUE)
         );
 
         spnlFeed.setViewportView(pnlFeed);
@@ -246,52 +286,49 @@ public class ViewPrincipal extends javax.swing.JFrame {
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(btnSerguir, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btbAtualizar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(btnAddFeed, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                    .addComponent(btnSerguir, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(btnAddFeed, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
                         .addContainerGap()
-                        .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 188, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)))
-                .addComponent(spnlFeed, javax.swing.GroupLayout.PREFERRED_SIZE, 628, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 188, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(btbAtualizar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(spnlFeed, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(18, Short.MAX_VALUE))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
                     .addComponent(spnlFeed, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, jPanel3Layout.createSequentialGroup()
+                    .addGroup(jPanel3Layout.createSequentialGroup()
                         .addComponent(btbAtualizar)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnSerguir)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(btnAddFeed)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(jTabbedPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 324, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(89, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 867, Short.MAX_VALUE)
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, 1056, Short.MAX_VALUE)
             .addGroup(layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, 1036, Short.MAX_VALUE)
                 .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
 
         pack();
